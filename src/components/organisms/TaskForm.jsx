@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import ApperFileFieldComponent from "@/components/atoms/FileUploader/ApperFileFieldComponent";
 import ApperIcon from "@/components/ApperIcon";
 import Textarea from "@/components/atoms/Textarea";
 import Select from "@/components/atoms/Select";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
+import ApperFileFieldComponent from "@/components/atoms/FileUploader/ApperFileFieldComponent";
 
 const TaskForm = ({ onAddTask }) => {
   const [title, setTitle] = useState("")
@@ -214,8 +214,6 @@ const TaskForm = ({ onAddTask }) => {
           </div>
 
 <div className="flex justify-end pt-4">
-
-          <div className="flex justify-end pt-4">
             <Button
               type="submit"
               disabled={isSubmitting}
