@@ -1,18 +1,20 @@
-import { useState } from "react"
-import { motion } from "framer-motion"
-import Button from "@/components/atoms/Button"
-import Input from "@/components/atoms/Input"
-import Select from "@/components/atoms/Select"
-import Textarea from "@/components/atoms/Textarea"
-import ApperIcon from "@/components/ApperIcon"
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import ApperFileFieldComponent from "@/components/atoms/FileUploader/ApperFileFieldComponent";
+import ApperIcon from "@/components/ApperIcon";
+import Textarea from "@/components/atoms/Textarea";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
 
 const TaskForm = ({ onAddTask }) => {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState("medium")
-  const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const [errors, setErrors] = useState({})
+  const [uploadedFiles, setUploadedFiles] = useState([])
+  
   const validateForm = () => {
     const newErrors = {}
     
@@ -22,7 +24,6 @@ const TaskForm = ({ onAddTask }) => {
     
     return newErrors
   }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -34,22 +35,46 @@ const TaskForm = ({ onAddTask }) => {
     setIsSubmitting(true)
     
     try {
-      await onAddTask({
-        title: title.trim(),
-        description: description.trim(),
+// Get files from the file uploader
+      let files = [];
+      try {
+        const { ApperFileUploader } = window.ApperSDK || {};
+        if (ApperFileUploader) {
+          files = ApperFileUploader.FileField.getFiles('task-files') || [];
+        }
+      } catch (error) {
+        console.error('Error getting files:', error);
+        files = uploadedFiles; // Fallback to state
+      }
+
+      const taskData = {
+        title,
+        description,
         priority,
         status: "active",
         createdAt: new Date().toISOString(),
-        completedAt: null
-      })
+        completedAt: null,
+        files: files
+};
+
+      onAddTask(taskData);
+      setTitle("");
+      setDescription("");
+      setPriority("medium");
+      setErrors({});
+      setUploadedFiles([]);
       
-      // Reset form
-      setTitle("")
-      setDescription("")
-      setPriority("medium")
-      setErrors({})
+      // Clear the file uploader
+      try {
+        const { ApperFileUploader } = window.ApperSDK || {};
+        if (ApperFileUploader) {
+          ApperFileUploader.FileField.clearField('task-files');
+        }
+      } catch (error) {
+        console.error('Error clearing files:', error);
+      }
     } catch (error) {
-      console.error("Error adding task:", error)
+      console.error("Error submitting task:", error);
     } finally {
       setIsSubmitting(false)
     }
@@ -118,22 +143,34 @@ const TaskForm = ({ onAddTask }) => {
             <label className="block text-sm font-medium text-slate-700">
               Description
             </label>
-            <Textarea
+<Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add more details about this task..."
               rows={3}
+              className={errors.description ? "border-error-500" : ""}
             />
+            {errors.description && (
+              <motion.p 
+                className="text-sm text-error-600 flex items-center space-x-1"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <ApperIcon name="AlertCircle" className="w-4 h-4" />
+                <span>{errors.description}</span>
+              </motion.p>
+            )}
           </div>
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">
               Priority
             </label>
-            <div className="relative">
+<div className="relative">
               <Select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
+                className={`pl-10 ${errors.priority ? "border-error-500" : ""}`}
               >
                 <option value="high">High Priority</option>
                 <option value="medium">Medium Priority</option>
@@ -146,7 +183,37 @@ const TaskForm = ({ onAddTask }) => {
                 />
               </div>
             </div>
+            {errors.priority && (
+              <motion.p 
+                className="text-sm text-error-600 flex items-center space-x-1"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <ApperIcon name="AlertCircle" className="w-4 h-4" />
+                <span>{errors.priority}</span>
+              </motion.p>
+            )}
           </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-700">
+              Attach Files
+            </label>
+            <ApperFileFieldComponent
+              elementId="task-files"
+              config={{
+                fieldKey: 'task-files',
+                fieldName: 'file_data_c',
+                tableName: 'files_c',
+                apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+                apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY,
+                existingFiles: uploadedFiles,
+                fileCount: uploadedFiles.length
+              }}
+            />
+          </div>
+
+<div className="flex justify-end pt-4">
 
           <div className="flex justify-end pt-4">
             <Button

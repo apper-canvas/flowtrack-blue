@@ -1,14 +1,17 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { format } from "date-fns"
 import Button from "@/components/atoms/Button"
 import Badge from "@/components/atoms/Badge"
 import ApperIcon from "@/components/ApperIcon"
+import { fileService } from "@/services/api/fileService"
 
 const TaskCard = ({ task, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDescription, setEditDescription] = useState(task.description || "")
+  const [attachedFiles, setAttachedFiles] = useState([])
+  const [loadingFiles, setLoadingFiles] = useState(false)
 
   const handleToggleComplete = () => {
     onUpdate(task.Id, {
@@ -42,8 +45,33 @@ const TaskCard = ({ task, onUpdate, onDelete }) => {
     }
   }
 
-  const isCompleted = task.status === "completed"
+const isCompleted = task.status === "completed"
 
+  // Load attached files when component mounts
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (!task.Id) return;
+      
+      setLoadingFiles(true);
+      try {
+        const files = await fileService.getByTaskId(task.Id);
+        setAttachedFiles(files);
+      } catch (error) {
+        console.error("Error loading files:", error);
+      } finally {
+        setLoadingFiles(false);
+      }
+    };
+
+    loadFiles();
+  }, [task.Id]);
+
+  const handleFileDownload = (file) => {
+    const url = fileService.getFileUrl(file.fileData);
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
   return (
     <motion.div
       layout
@@ -124,17 +152,66 @@ const TaskCard = ({ task, onUpdate, onDelete }) => {
                     {task.description}
                   </p>
                 )}
-              </>
+</>
             )}
           </div>
         </div>
         
-        <Badge variant={getPriorityColor(task.priority)}>
-          {task.priority}
-        </Badge>
+        <div className="flex items-start space-x-3">
+          {attachedFiles.length > 0 && (
+            <div className="flex items-center space-x-1 text-xs text-slate-500">
+              <ApperIcon name="Paperclip" className="w-3 h-3" />
+              <span>{attachedFiles.length}</span>
+            </div>
+          )}
+          <Badge variant={getPriorityColor(task.priority)}>
+            {task.priority}
+          </Badge>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+      {/* Attached Files Section */}
+      {attachedFiles.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-700 flex items-center">
+            <ApperIcon name="Paperclip" className="w-4 h-4 mr-1" />
+            Attached Files ({attachedFiles.length})
+          </h4>
+          <div className="space-y-1">
+            {attachedFiles.map((file) => (
+              <div
+                key={file.Id}
+                className="flex items-center justify-between p-2 bg-slate-50 rounded-md border border-slate-200"
+              >
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <ApperIcon name="File" className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span className="text-sm text-slate-700 truncate" title={file.fileName}>
+                    {file.fileName}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleFileDownload(file)}
+                  className="p-1 text-slate-400 hover:text-primary-500 transition-colors duration-200 flex-shrink-0"
+                  title="Download file"
+                >
+                  <ApperIcon name="Download" className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loadingFiles && (
+        <div className="flex items-center justify-center py-2">
+          <div className="flex items-center space-x-2 text-slate-500">
+            <div className="animate-spin w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full"></div>
+            <span className="text-sm">Loading files...</span>
+          </div>
+        </div>
+      )}
+
+<div className="flex items-center justify-between pt-2 border-t border-slate-100">
         <div className="text-xs text-slate-500 space-y-1">
           <div>Created {format(new Date(task.createdAt), "MMM dd, yyyy")}</div>
           {isCompleted && task.completedAt && (

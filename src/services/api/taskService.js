@@ -1,5 +1,6 @@
-import { getApperClient } from "@/services/apperClient";
 import { toast } from "react-toastify";
+import React from "react";
+import { getApperClient } from "@/services/apperClient";
 
 const tableName = "task_c";
 
@@ -20,14 +21,14 @@ export const taskService = {
           {"field": {"Name": "title_c"}},
           {"field": {"Name": "description_c"}},
           {"field": {"Name": "priority_c"}},
-          {"field": {"Name": "status_c"}},
+{"field": {"Name": "status_c"}},
           {"field": {"Name": "created_at_c"}},
-          {"field": {"Name": "completed_at_c"}},
-          {"field": {"Name": "CreatedOn"}},
-          {"field": {"Name": "ModifiedOn"}}
+          {"field": {"Name": "completed_at_c"}}
         ],
-        orderBy: [{"fieldName": "CreatedOn", "sorttype": "DESC"}],
-        pagingInfo: {"limit": 100, "offset": 0}
+        orderBy: [{
+          "fieldName": "created_at_c", 
+          "sorttype": "DESC"
+        }]
       };
 
       const response = await apperClient.fetchRecords(tableName, params);
@@ -73,14 +74,14 @@ export const taskService = {
           {"field": {"Name": "Name"}},
           {"field": {"Name": "Tags"}},
           {"field": {"Name": "title_c"}},
-          {"field": {"Name": "description_c"}},
+{"field": {"Name": "description_c"}},
           {"field": {"Name": "priority_c"}},
+          {"field": {"Name": "status_c"}},
           {"field": {"Name": "status_c"}},
           {"field": {"Name": "created_at_c"}},
           {"field": {"Name": "completed_at_c"}}
         ]
       };
-
       const response = await apperClient.getRecordById(tableName, parseInt(id), params);
 
       if (!response?.data) {
@@ -116,14 +117,12 @@ export const taskService = {
       const params = {
         records: [
           {
-            Name: taskData.title || taskData.title_c || '',
+Name: taskData.title || taskData.title_c || '',
             title_c: taskData.title || taskData.title_c || '',
             description_c: taskData.description || taskData.description_c || '',
             priority_c: taskData.priority || taskData.priority_c || 'medium',
             status_c: taskData.status || taskData.status_c || 'active',
-            created_at_c: taskData.createdAt || taskData.created_at_c || new Date().toISOString(),
-            completed_at_c: taskData.completedAt || taskData.completed_at_c || null,
-            Tags: taskData.Tags || ''
+            created_at_c: new Date().toISOString()
           }
         ]
       };
@@ -149,14 +148,14 @@ export const taskService = {
         }
 
         if (successful.length > 0) {
-          const createdTask = successful[0].data;
+const createdTask = successful[0].data;
           return {
             ...createdTask,
             title: createdTask.title_c || createdTask.Name || '',
             description: createdTask.description_c || '',
             priority: createdTask.priority_c || 'medium',
             status: createdTask.status_c || 'active',
-            createdAt: createdTask.created_at_c || createdTask.CreatedOn,
+            createdAt: createdTask.created_at_c,
             completedAt: createdTask.completed_at_c
           };
         }
@@ -184,14 +183,11 @@ export const taskService = {
 
       // Map UI field names to database field names
       if (updates.title !== undefined) updateData.title_c = updates.title;
-      if (updates.description !== undefined) updateData.description_c = updates.description;
+if (updates.description !== undefined) updateData.description_c = updates.description;
       if (updates.priority !== undefined) updateData.priority_c = updates.priority;
       if (updates.status !== undefined) updateData.status_c = updates.status;
       if (updates.completedAt !== undefined) updateData.completed_at_c = updates.completedAt;
       if (updates.Tags !== undefined) updateData.Tags = updates.Tags;
-
-      // Update Name field to match title_c for consistency
-      if (updates.title !== undefined) updateData.Name = updates.title;
 
       const params = {
         records: [updateData]
@@ -218,14 +214,14 @@ export const taskService = {
         }
 
         if (successful.length > 0) {
-          const updatedTask = successful[0].data;
+const updatedTask = successful[0].data;
           return {
             ...updatedTask,
             title: updatedTask.title_c || updatedTask.Name || '',
             description: updatedTask.description_c || '',
             priority: updatedTask.priority_c || 'medium',
             status: updatedTask.status_c || 'active',
-            createdAt: updatedTask.created_at_c || updatedTask.CreatedOn,
+            createdAt: updatedTask.created_at_c,
             completedAt: updatedTask.completed_at_c
           };
         }
